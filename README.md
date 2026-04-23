@@ -1,7 +1,7 @@
 # Genomic_file_wrangler
 Collection of scripts to process and wrangle various genomic files.
 
-**get_cds_from_assembly.py** - Python script to obtain CDS file from assembly and GFF files
+**(1) get_cds_from_assembly.py** - Python script to obtain CDS file from assembly and GFF files
 
 Usage instructions of **get_cds_from_assembly.py**:
 
@@ -25,4 +25,16 @@ python3 get_cds_from_assembly.py
 					have the same child-parent linker attribute fields. For eg., if Parent is the child-parent linker in the mRNA feature line,
 					then Parent will be the child-parent linker for all other child-level feature lines in the GFF
 					(iv) parent_attribute: attribute field of the gene feature like ID
+
+```
+**(2) transcript_to_gene_map.py** - Python script to obtain list of genes corresponding to list of transcripts by mapping with the GFF file
+
+Usage instructions of **transcript_to_gene_map.py**:
+
+```
+python3 transcript_to_gene_map.py
+					--gff <full path to GFF file>
+					--transcripts <full path to TXT file with transcripts (one per line)>
+					--genes <full path to output file>
+
 ```
