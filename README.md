@@ -38,3 +38,13 @@ python3 transcript_to_gene_map.py
 					--genes <full path to output file>
 
 ```
+**(3) Isoform_cleaner.py** - Python script to clean laternate transcripts from CDS file and produce representative CDS, PEP files with only the primary transcripts
+
+Usage instructions of **Isoform_cleaner.py**:
+
+```
+python3 Isoform_cleaner.py
+                    --cds <Full path to CDS file>
+			        --sample_name <Name of the sample you are analyzing>
+			        --out <Full path to output directory>
+```
