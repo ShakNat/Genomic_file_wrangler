@@ -5,6 +5,8 @@ __version__=0.1
 __usage__="""
 			python3 Isoform_cleaner.py
 			--cds <Full path to CDS file>
+			--gff <Full path to GFF file>
+			--gff_config <Full path to GFF config file>
 			--sample_name <Name of the sample you are analyzing>
 			--out <Full path to output directory>
 			"""
