@@ -45,6 +45,8 @@ Usage instructions of **Isoform_cleaner.py**:
 ```
 python3 Isoform_cleaner.py
                     --cds <Full path to CDS file>
+                    --gff <Full path to GFF file>
+                    --gff_config <Full path to GFF config TXT file> Refer to details on the file preparation in the usage section of get_cds_from_assembly.py script above
 			        --sample_name <Name of the sample you are analyzing>
 			        --out <Full path to output directory>
 ```
