@@ -155,7 +155,6 @@ def load_fasta(fasta_file):
 
 #function for removing alternate transcripts from the peptide FASTA file
 def isoform_clean(gff3_input_file, cds_file, no_trans_cds, child_attribute, child_parent_linker):
-	repr_ids={}
 	no_gene_no_parent = False
 	has_gene = False
 	has_parent =False
@@ -282,7 +281,7 @@ def isoform_clean(gff3_input_file, cds_file, no_trans_cds, child_attribute, chil
 					else:
 						best_trans, seq = max(trans_length, key=lambda x: len(x[1]))
 						out.write('>' + str(best_trans) + "\n" + str(seq))
-						repr_ids[best_trans] = trans_length.remove(best_trans)
+						
 
 	else:#dealing with compressed cds file
 		with gzip.open(cds_file, "rt") as f:
@@ -311,8 +310,6 @@ def isoform_clean(gff3_input_file, cds_file, no_trans_cds, child_attribute, chil
 					else:
 						best_trans, seq = max(trans_length, key=lambda x: len(x[1]))
 						out.write('>' + str(best_trans) + "\n" + str(seq))
-						repr_ids[best_trans] = trans_length.remove(best_trans)
-	return repr_ids
 
 
 def main(arguments):
