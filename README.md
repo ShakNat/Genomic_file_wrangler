@@ -16,14 +16,17 @@ python3 get_cds_from_assembly.py
 			
 			optional:
 					--gff_config <full path to txt file containing the gff parameters to be used separated by spaces or tabs;
-					Needs 4 columns in the order 
+					Needs 4 columns in the order
+
 					(i) base file name - same as the base name you use for the gff file | all in case all the gff 
 						have the same attribute pattern
+
 					(ii) child_attribute: attribute field of the mRNA or transcript feature in the file like ID
+
 					iii) child_parent_linker: attribute field of the mRNA or transcript, CDS, exon features that link them with their 
 					respective parent feature like Parent - Note: base assumption by the tool is that all child levels
-					have the same child-parent linker attribute fields. For eg., if Parent is the child-parent linker in the mRNA feature line,
-					then Parent will be the child-parent linker for all other child-level feature lines in the GFF
+					have the same child-parent linker attribute fields. For eg., if Parent is the child-parent linker in the mRNA 						feature line,then Parent will be the child-parent linker for all other child-level feature lines in the GFF
+
 					(iv) parent_attribute: attribute field of the gene feature like ID
 
 ```
@@ -46,7 +49,21 @@ Usage instructions of **Isoform_cleaner.py**:
 python3 Isoform_cleaner.py
                     --cds <Full path to CDS file>
                     --gff <Full path to GFF file>
-                    --gff_config <Full path to GFF config TXT file> Refer to details on the file preparation in the usage section of get_cds_from_assembly.py script above
-			        --sample_name <Name of the sample you are analyzing>
-			        --out <Full path to output directory>
+					--sample_name <Name of the sample you are analyzing>
+					--out <Full path to output directory>
+
+					Optional:
+                    --gff_config <Full path to GFF config TXT file>
+					Needs 3 columns in the order
+
+					(i) child_attribute: attribute field of the mRNA or transcript feature in the file like ID
+
+					(ii) child_parent_linker: attribute field of the mRNA or transcript, CDS, exon features that link them with their 
+					respective parent feature like Parent - Note: base assumption by the tool is that all child levels
+					have the same child-parent linker attribute fields. For eg., if Parent is the child-parent linker in the mRNA 						feature line,then Parent will be the child-parent linker for all other child-level feature lines in the GFF
+
+					(iii) parent_attribute: attribute field of the gene feature like ID
+
+			        
+			        
 ```
