@@ -21,19 +21,35 @@ def load_multiple_fasta_file(fasta_file):
 	content = {}
 	header = None
 	seq_chunks = []
-	with open(fasta_file, "r") as f:
-		for line in f:
-			if not line.strip():
-				continue
-			if line.startswith(">"):
-				if header is not None:
-					content[header] = "".join(seq_chunks)
-				header = line[1:].strip().split()[0]  # trim after first whitespace
-				seq_chunks = []
-			else:
-				seq_chunks.append(line.strip())
-		if header is not None:
-			content[header] = "".join(seq_chunks)
+	#uncompressed FASTA file
+	if fasta_file[-2:].lower() != 'gz':
+		with open(fasta_file, "r") as f:
+			for line in f:
+				if not line.strip():
+					continue
+				if line.startswith(">"):
+					if header is not None:
+						content[header] = "".join(seq_chunks)
+					header = line[1:].strip().split()[0]  # trim after first whitespace
+					seq_chunks = []
+				else:
+					seq_chunks.append(line.strip())
+			if header is not None:
+				content[header] = "".join(seq_chunks)
+	else:
+		with gzip.open(fasta_file, "rt") as f:
+			for line in f:
+				if not line.strip():
+					continue
+				if line.startswith(">"):
+					if header is not None:
+						content[header] = "".join(seq_chunks)
+					header = line[1:].strip().split()[0]  # trim after first whitespace
+					seq_chunks = []
+				else:
+					seq_chunks.append(line.strip())
+			if header is not None:
+				content[header] = "".join(seq_chunks)
 	return content
 
 def translate(seq, genetic_code, unknown="X", internal_stop_to_x=False, keep_terminal_stop=True):
@@ -154,7 +170,7 @@ def load_fasta(fasta_file):
 	return sequences
 
 #function for removing alternate transcripts from the peptide FASTA file
-def isoform_clean(gff3_input_file, cds_file, no_trans_cds, child_attribute, child_parent_linker):
+def isoform_clean(gff3_input_file, cds_dict, no_trans_cds, child_attribute, child_parent_linker):
 	no_gene_no_parent = False
 	has_gene = False
 	has_parent =False
@@ -250,66 +266,23 @@ def isoform_clean(gff3_input_file, cds_file, no_trans_cds, child_attribute, chil
 								transcripts_per_gene.update({partsnew1: [partsnew0]})
 				line = f.readline()
 
-
 	gene_names = list(transcripts_per_gene.keys())
-	#dealing with uncompressed cds file
-	if cds_file[-2:].lower() != 'gz':
-		with open(cds_file, "r") as f:
-			# Only write peptide output when no CDS mapping available
-			with open(no_trans_cds, "w") as out:
-				line = f.readlines()
-				cds_dict = {}
-				for each in line:
-					if '>' in each:
-						ind = line.index(each)
-						cds_dict.update({str(each).replace('>', '').replace('\n', ''): line[ind + 1]})
-				transcripts = list(cds_dict.keys())
-
-				for gene in gene_names:
-					trans_length = []
-					isoform_list=[]
-					for trans in transcripts_per_gene[gene]:
-						for each in transcripts:
-							if trans == each:
-								if len(transcripts_per_gene[gene]) < 2:
-									out.write('>' + str(each) + '\n' + str(cds_dict[each]))
-								else:
-									trans_length.append((each, cds_dict[each]))
-									isoform_list.append(each)
-					if len(trans_length) == 0:
-						pass
+	with open(no_trans_cds, "w") as out:
+		for gene in gene_names:
+			trans_length = []
+			isoform_list = []
+			for trans in transcripts_per_gene[gene]:
+				if trans in cds_dict:
+					if len(transcripts_per_gene[gene]) < 2:
+						out.write('>' + str(trans) + '\n' + str(cds_dict[trans]) + '\n')
 					else:
-						best_trans, seq = max(trans_length, key=lambda x: len(x[1]))
-						out.write('>' + str(best_trans) + "\n" + str(seq))
-						
+						trans_length.append((trans, cds_dict[trans]))
+						isoform_list.append(trans)
+			if trans_length:
+				best_trans, seq = max(trans_length, key=lambda x: len(x[1]))
+				out.write('>' + str(best_trans) + "\n" + str(seq) + "\n")
+				isoform_list.remove(best_trans)
 
-	else:#dealing with compressed cds file
-		with gzip.open(cds_file, "rt") as f:
-			with open(no_trans_cds, "w") as out:
-				line = f.readlines()
-				cds_dict = {}
-				for each in line:
-					if '>' in each:
-						ind = line.index(each)
-						cds_dict.update({str(each).replace('>', '').replace('\n', ''): line[ind + 1]})
-				transcripts = list(cds_dict.keys())
-
-				for gene in gene_names:
-					trans_length = []
-					isoform_list = []
-					for trans in transcripts_per_gene[gene]:
-						for each in transcripts:
-							if trans == each:
-								if len(transcripts_per_gene[gene]) < 2:
-									out.write('>' + str(each) + '\n' + str(cds_dict[each]))
-								else:
-									trans_length.append((each, cds_dict[each]))
-									isoform_list.append(each)
-					if len(trans_length) == 0:
-						pass
-					else:
-						best_trans, seq = max(trans_length, key=lambda x: len(x[1]))
-						out.write('>' + str(best_trans) + "\n" + str(seq))
 
 
 def main(arguments):
@@ -351,8 +324,8 @@ def main(arguments):
 		pass
 	else:
 		print("Removing alternative isoforms")
-
-		isoform_clean(gff_file, cds_file, isoform_reduced_cds_file, child_attribute, child_parent_linker)
+		cds_dict = load_multiple_fasta_file(cds_file)
+		isoform_clean(gff_file, cds_dict, isoform_reduced_cds_file, child_attribute, child_parent_linker)
 
 		#code block to produce PEP file without isoforms
 		repr_input_spec = isoform_reduced_cds_file
