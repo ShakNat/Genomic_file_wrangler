@@ -1,10 +1,10 @@
-### V0.1 ###
+### V0.2 ###
 ### Shakunthala Natarajan ###
 """
 feature requests and bug reports to s64snata@uni-bonn.de
 """
 
-__version__='0.1'
+__version__='0.2'
 __usage__= """
 			python3 get_cds_from_assembly.py
 			--assembly <full path to file or folder of assembly files>
@@ -212,10 +212,13 @@ def load_transcript_information_from_gff3( gff3_input_file,process_pseudos,child
 								if len(parts[-1]) > len(str(child_parent_linker)+'='):
 									if ";" in parts[-1]:
 										parent = None  # Changed from False to None
+										part_value = None
 										subparts = parts[-1].split(';')
 										for subp in subparts:
 											if (str(child_parent_linker)+'=') in subp:
 												parent = subp.replace((str(child_parent_linker)+'='), "")
+											if subp.startswith('part='):#to handle trans-splicing events
+												part_value = int(subp.replace('part=', '')) if subp.replace('part=','').isdigit() else None
 
 										# Check if parent is pseudogene AFTER finding parent
 										if parent:
@@ -228,7 +231,9 @@ def load_transcript_information_from_gff3( gff3_input_file,process_pseudos,child
 												'start': int(parts[3]),
 												'end': int(parts[4]),
 												'orientation': parts[6],
-												'parent': parent
+												'parent': parent,
+												'phase': int(parts[7]) if parts[7].isdigit() else 0,
+												'part': part_value
 											})
 										else:
 											message.append("no parent detected - " + line)
@@ -247,7 +252,9 @@ def load_transcript_information_from_gff3( gff3_input_file,process_pseudos,child
 												'start': int(parts[3]),
 												'end': int(parts[4]),
 												'orientation': parts[6],
-												'parent': parent
+												'parent': parent,
+												'phase': int(parts[7]) if parts[7].isdigit() else 0,
+												'part': None
 											})
 										else:
 											message.append("only one field - " + line)
@@ -287,7 +294,7 @@ def load_transcript_information_from_gff3( gff3_input_file,process_pseudos,child
 												'start': int(parts[3]),
 												'end': int(parts[4]),
 												'orientation': parts[6],
-												'parent': parent
+												'parent': parent,
 											})
 										else:
 											message.append("no parent detected - " + line)
@@ -311,7 +318,6 @@ def load_transcript_information_from_gff3( gff3_input_file,process_pseudos,child
 				line = f.readline()
 
 		if has_cds:
-			# --- sort data by parent --- #
 			sorted_data = {}
 			for each in information:
 				try:
@@ -321,10 +327,18 @@ def load_transcript_information_from_gff3( gff3_input_file,process_pseudos,child
 
 			final_data = []
 			for key in sorted_data.keys():
-				if sorted_data[key][0]['orientation'] == '+':
-					final_data.append(sorted(sorted_data[key], key=itemgetter('start')))
+				segments = sorted_data[key]
+				orientations = set(s['orientation'] for s in segments)
+				has_part = any(s.get('part') is not None for s in segments)
+
+				if len(orientations) > 1 or has_part:
+					print(f"WARNING: transcript '{key}' shows signs of trans-splicing "
+								   f"(mixed strands: {len(orientations) > 1}, part= present: {has_part}) — "
+								   f"extracting using standard coordinate-based ordering.")
+				if segments[0]['orientation'] == '+':
+					final_data.append(sorted(segments, key=itemgetter('start')))
 				else:
-					final_data.append(sorted(sorted_data[key], key=itemgetter('start'))[::-1])
+					final_data.append(sorted(segments, key=itemgetter('start'))[::-1])
 		else:
 			# Process exon/transcript based annotation
 			final_data = []
@@ -470,10 +484,13 @@ def load_transcript_information_from_gff3( gff3_input_file,process_pseudos,child
 								if len(parts[-1]) > len(str(child_parent_linker)+'='):
 									if ";" in parts[-1]:
 										parent = None  # Changed from False to None
+										part_value = None
 										subparts = parts[-1].split(';')
 										for subp in subparts:
 											if str(child_parent_linker)+'=' in subp:
 												parent = subp.replace(str(child_parent_linker)+'=', "")
+											if subp.startswith('part='):#to handle trans-splicing events
+												part_value = int(subp.replace('part=', '')) if subp.replace('part=','').isdigit() else None
 
 										# Check if parent is pseudogene AFTER finding parent
 										if parent:
@@ -486,7 +503,9 @@ def load_transcript_information_from_gff3( gff3_input_file,process_pseudos,child
 												'start': int(parts[3]),
 												'end': int(parts[4]),
 												'orientation': parts[6],
-												'parent': parent
+												'parent': parent,
+												'phase': int(parts[7]) if parts[7].isdigit() else 0,
+												'part': part_value
 											})
 										else:
 											message.append("no parent detected - " + line)
@@ -505,7 +524,9 @@ def load_transcript_information_from_gff3( gff3_input_file,process_pseudos,child
 												'start': int(parts[3]),
 												'end': int(parts[4]),
 												'orientation': parts[6],
-												'parent': parent
+												'parent': parent,
+												'phase': int(parts[7]) if parts[7].isdigit() else 0,
+												'part': None
 											})
 										else:
 											message.append("only one field - " + line)
@@ -579,10 +600,19 @@ def load_transcript_information_from_gff3( gff3_input_file,process_pseudos,child
 
 			final_data = []
 			for key in sorted_data.keys():
-				if sorted_data[key][0]['orientation'] == '+':
-					final_data.append(sorted(sorted_data[key], key=itemgetter('start')))
+				segments = sorted_data[key]
+				orientations = set(s['orientation'] for s in segments)
+				has_part = any(s.get('part') is not None for s in segments)
+
+				if len(orientations) > 1 or has_part:
+					print(f"WARNING: transcript '{key}' shows signs of trans-splicing "
+								   f"(mixed strands: {len(orientations) > 1}, part= present: {has_part}) — "
+								   f"extracting using standard coordinate-based ordering.")
+
+				if segments[0]['orientation'] == '+':
+					final_data.append(sorted(segments, key=itemgetter('start')))
 				else:
-					final_data.append(sorted(sorted_data[key], key=itemgetter('start'))[::-1])
+					final_data.append(sorted(segments, key=itemgetter('start'))[::-1])
 		else:
 			# Process exon/transcript based annotation
 			final_data = []
@@ -600,7 +630,7 @@ def load_transcript_information_from_gff3( gff3_input_file,process_pseudos,child
 #function of constructing the CDS FASTA file
 def construct_CDS_file( transcript_info, CDS_file, assembly, child_parent_linker):
 	"""! @brief construct file with all sequences for translation """
-	with open( CDS_file, "w" ) as out:
+	with open(CDS_file, "w") as out:
 		for transcript in transcript_info:
 			seq = []
 			revcomp_status = False
@@ -608,24 +638,33 @@ def construct_CDS_file( transcript_info, CDS_file, assembly, child_parent_linker
 				revcomp_status = True
 			for part in transcript:
 				if revcomp_status:
-					seq.append( revcomp( assembly[ part['chr'] ][ part['start']-1:part['end'] ] ) )
+					seq.append(revcomp(assembly[part['chr']][part['start'] - 1:part['end']]))
 				else:
-					seq.append( assembly[ part['chr'] ][ part['start']-1:part['end'] ] )
+					seq.append(assembly[part['chr']][part['start'] - 1:part['end']])
 				# Get parent ID, handling both formats of CDS feature or mRNA/ exon features' presence
 				parent_id = transcript[0]['parent']
-				if str(child_parent_linker)+"=" in parent_id:
-					parent_id = parent_id.replace(str(child_parent_linker)+"=", "")
+				if str(child_parent_linker) + "=" in parent_id:
+					parent_id = parent_id.replace(str(child_parent_linker) + "=", "")
+			first_phase = transcript[0].get('phase', 0)#to account for different frames (phase values) for slicing the sequences
+			if first_phase:
+				seq[0] = seq[0][first_phase:]
 			out.write( '>' + str(parent_id) + '\n' + "".join( seq ) + '\n' )
 
 #function for constructing the reverse complement
 def revcomp( seq ):
 	"""! @brief constructs revcomp """
 	new_seq = []
-	dictionary = { 'A':'T', 'T':'A', 'C':'G', 'G':'C', 'N':'N','a': 't', 'c': 'g', 'g': 'c', 't': 'a', 'n': 'n' }
+	dictionary = { 'A':'T', 'T':'A', 'C':'G', 'G':'C', 'N':'N',
+		'R':'Y', 'Y':'R', 'S':'S', 'W':'W',
+		'K':'M', 'M':'K', 'B':'V', 'V':'B', 'D':'H', 'H':'D',
+		'a':'t', 't':'a', 'c':'g', 'g':'c', 'n':'n',
+		'r':'y', 'y':'r', 's':'s', 'w':'w',
+		'k':'m', 'm':'k', 'b':'v', 'v':'b', 'd':'h', 'h':'d' }#modified dictionary to handle all IUPAC codes
 	for nt in seq:
 		try:
 			new_seq.append( dictionary[ nt ] )
 		except KeyError:
+			print("WARNING: unexpected character in sequence during revcomp: '" + nt + "'")
 			new_seq.append( "N")
 	return ''.join( new_seq[::-1] )
 
