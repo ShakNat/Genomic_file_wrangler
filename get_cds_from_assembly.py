@@ -1,10 +1,10 @@
-### V0.2 ###
+### V0.3 ###
 ### Shakunthala Natarajan ###
 """
 feature requests and bug reports to s64snata@uni-bonn.de
 """
 
-__version__='0.2'
+__version__='0.3'
 __usage__= """
 			python3 get_cds_from_assembly.py
 			--assembly <full path to file or folder of assembly files>
@@ -96,7 +96,7 @@ def load_sequences( multiple_fasta_file ):
 		return sequences
 
 #function for loading transcript information from GFF3 file
-def load_transcript_information_from_gff3( gff3_input_file,process_pseudos,child_attribute,child_parent_linker):
+def load_transcript_information_from_gff3( gff3_input_file,process_pseudos,child_attribute,child_parent_linker, parent_attribute):
 	"""! @brief load all transcript information from gff3 file """
 	# --- load all data from file --- #
 	message = []
@@ -127,8 +127,8 @@ def load_transcript_information_from_gff3( gff3_input_file,process_pseudos,child
 							parts = line.strip().split('\t')
 							if len(parts) >= 9 and parts[2].upper() == 'PSEUDOGENE':
 								for attr in parts[8].split(';'):
-									if attr.startswith((child_attribute)+'='):
-										gene_id = attr[(len(child_attribute)+1):]
+									if attr.startswith((parent_attribute)+'='):
+										gene_id = attr[(len(parent_attribute)+1):]
 										gff_pseudos_genes.add(gene_id)
 										break
 					for line in gff_lines:
@@ -161,8 +161,8 @@ def load_transcript_information_from_gff3( gff3_input_file,process_pseudos,child
 							parts = line.strip().split('\t')
 							if len(parts) >= 9 and parts[2].upper() == 'PSEUDOGENE':
 								for attr in parts[8].split(';'):
-									if attr.startswith(str(child_attribute)+'='):
-										gene_id = attr[3:]
+									if attr.startswith(str(parent_attribute)+'='):
+										gene_id = attr[(len(parent_attribute)+1):]
 										gff_pseudos_genes.add(gene_id)
 										break
 
@@ -194,10 +194,10 @@ def load_transcript_information_from_gff3( gff3_input_file,process_pseudos,child
 					for line in gff_lines:
 						if line[0] != '#':
 							parts = line.strip().split('\t')
-							if len(parts) >= 9 and parts[2].upper() == 'PSEUDOGENE' or 'PSEUDO=TRUE' in parts[8].upper() or 'GENE_BIOTYPE=PSEUDOGENE' in parts[8].upper():
+							if len(parts) >= 9 and (parts[2].upper() == 'PSEUDOGENE' or 'PSEUDO=TRUE' in parts[8].upper() or 'GENE_BIOTYPE=PSEUDOGENE' in parts[8].upper()):
 								for attr in parts[8].split(';'):
-									if attr.startswith(str(child_attribute)+'='):
-										gene_id = attr[(len(child_attribute)+1):]
+									if attr.startswith(str(parent_attribute)+'='):
+										gene_id = attr[(len(parent_attribute)+1):]
 										gff_pseudos.add(gene_id)
 										break
 
@@ -370,6 +370,7 @@ def load_transcript_information_from_gff3( gff3_input_file,process_pseudos,child
 			has_cds = any(line.split('\t')[2].upper() == 'CDS' for line in gff_lines
 				  if not line.startswith('#') and len(line.split('\t')) >= 3)
 
+		"""
 		with gzip.open(gff3_input_file, "rt") as f:
 			gff_lines = f.readlines()
 			# collecting pseudogenes to skip cds of pseudogenes
@@ -379,13 +380,14 @@ def load_transcript_information_from_gff3( gff3_input_file,process_pseudos,child
 					if len(parts) >= 9 and parts[2].upper() == 'PSEUDOGENE':
 						for attr in parts[8].split(';'):
 							if attr.startswith(str(child_attribute)+'='):
-								gene_id = attr[len(str(child_attribute)+'=')+1:]
+								gene_id = attr[len(str(child_attribute))+1:]
 								gff_pseudos.add(gene_id)
 								break
 
 			# checking if cds feature is present in the GFF file
 			has_cds = any(line.split('\t')[2].upper() == 'CDS' for line in gff_lines
 						  if not line.startswith('#') and len(line.split('\t')) >= 3)
+		"""
 
 		if process_pseudos == 'no':
 			if has_mrna:  # checking for pseudogenes when mrna feature is present
@@ -398,8 +400,8 @@ def load_transcript_information_from_gff3( gff3_input_file,process_pseudos,child
 							parts = line.strip().split('\t')
 							if len(parts) >= 9 and parts[2].upper() == 'PSEUDOGENE':
 								for attr in parts[8].split(';'):
-									if attr.startswith(str(child_attribute)+'='):
-										gene_id = attr[len(str(child_attribute)+'=')+1:]
+									if attr.startswith(str(parent_attribute)+'='):
+										gene_id = attr[len(str(parent_attribute))+1:]
 										gff_pseudos_genes.add(gene_id)
 										break
 					for line in gff_lines:
@@ -411,7 +413,7 @@ def load_transcript_information_from_gff3( gff3_input_file,process_pseudos,child
 								# Parse all attributes first
 								for attr in parts[8].split(';'):
 									if attr.startswith(str(child_attribute)+'='):
-										mrna_id = attr[len(str(child_attribute)+'=')+1:]
+										mrna_id = attr[len(str(child_attribute))+1:]
 									elif attr.startswith(str(child_parent_linker)+'='):
 										parent = attr[len(str(child_parent_linker)+'=')+1:]
 								# Check if this mRNA belongs to a pseudogene
@@ -432,8 +434,8 @@ def load_transcript_information_from_gff3( gff3_input_file,process_pseudos,child
 							parts = line.strip().split('\t')
 							if len(parts) >= 9 and parts[2].upper() == 'PSEUDOGENE':
 								for attr in parts[8].split(';'):
-									if attr.startswith(str(child_attribute)+'='):
-										gene_id = attr[len(str(child_attribute)+'=')+1:]
+									if attr.startswith(str(parent_attribute)+'='):
+										gene_id = attr[len(str(parent_attribute))+1:]
 										gff_pseudos_genes.add(gene_id)
 										break
 
@@ -446,7 +448,7 @@ def load_transcript_information_from_gff3( gff3_input_file,process_pseudos,child
 								# Parse all attributes first
 								for attr in parts[8].split(';'):
 									if attr.startswith(str(child_attribute)+'='):
-										mrna_id = attr[len(str(child_attribute)+'=')+1:]
+										mrna_id = attr[len(str(child_attribute))+1:]
 									elif attr.startswith(str(child_parent_linker)+'='):
 										parent = attr[len(str(child_parent_linker)+'=')+1:]
 								# Check if this mRNA belongs to a pseudogene
@@ -454,8 +456,7 @@ def load_transcript_information_from_gff3( gff3_input_file,process_pseudos,child
 									if mrna_id:
 										gff_pseudos.add(mrna_id)
 								else:
-									if 'PSEUDO=TRUE' in parts[8].upper() or 'GENE_BIOTYPE=PSEUDOGENE' in parts[
-										8].upper():
+									if 'PSEUDO=TRUE' in parts[8].upper() or 'GENE_BIOTYPE=PSEUDOGENE' in parts[8].upper():
 										if mrna_id:
 											gff_pseudos.add(mrna_id)
 			else:  # checking for pseudogenes when no mrna, transcript feature is present and only cds feature is present
@@ -465,11 +466,10 @@ def load_transcript_information_from_gff3( gff3_input_file,process_pseudos,child
 					for line in gff_lines:
 						if line[0] != '#':
 							parts = line.strip().split('\t')
-							if len(parts) >= 9 and parts[2].upper() == 'PSEUDOGENE' or 'PSEUDO=TRUE' in parts[
-								8].upper() or 'GENE_BIOTYPE=PSEUDOGENE' in parts[8].upper():
+							if len(parts) >= 9 and (parts[2].upper() == 'PSEUDOGENE' or 'PSEUDO=TRUE' in parts[8].upper() or 'GENE_BIOTYPE=PSEUDOGENE' in parts[8].upper()):
 								for attr in parts[8].split(';'):
-									if attr.startswith(str(child_attribute)+'='):
-										gene_id = attr[len(str(child_attribute)+'=')+1:]
+									if attr.startswith(str(parent_attribute)+'='):
+										gene_id = attr[len(str(parent_attribute))+1:]
 										gff_pseudos.add(gene_id)
 										break
 
@@ -669,6 +669,7 @@ def revcomp( seq ):
 	return ''.join( new_seq[::-1] )
 
 def main (arguments):
+	print(f'You are using get_cds_from_assembly.py version {__version__}.')
 	assembly_arg=arguments[arguments.index('--assembly')+1]#full path to file or folder of assembly files
 	gff_arg=arguments[arguments.index('--gff')+1]#full path to file or folder of gff files
 	outdir = arguments[arguments.index('--out') + 1]
@@ -676,7 +677,10 @@ def main (arguments):
 		outdir += "/"
 	if not os.path.exists(outdir):
 		os.makedirs(outdir)
-	process_pseudos = 'yes'
+	if '--process_pseudos' in arguments:
+		process_pseudos = arguments[arguments.index('--process_pseudos') + 1]
+	else:
+		process_pseudos = 'yes'
 	gff_config_parameters = {}
 	if '--gff_config' in arguments:
 		gff_config_file = arguments[arguments.index('--gff_config')+1]
@@ -684,14 +688,14 @@ def main (arguments):
 			for line in f:
 				parts=line.strip().split()
 				if len(parts)==4:
-					gff_config_parameters[parts[0]] = {'child_attribute': parts[1],'child_parent_linker': parts[2],'parent_attribute': parts[3]}
+					gff_config_parameters[(parts[0].lower())] = {'child_attribute': parts[1],'child_parent_linker': parts[2],'parent_attribute': parts[3]}
 	else:
 		gff_config_parameters['default'] = {
 			'child_attribute': 'ID',
 			'child_parent_linker': 'Parent',
 			'parent_attribute': 'ID'
 		}
-	process_pseudos = 'yes'
+
 	assembly_files=[]
 	gff_files=[]
 	if os.path.isfile(assembly_arg):
@@ -718,11 +722,21 @@ def main (arguments):
 				if gff_name in gff_config_parameters:
 					child_attribute = gff_config_parameters[gff_name]['child_attribute']
 					child_parent_linker = gff_config_parameters[gff_name]['child_parent_linker']
+					parent_attribute = gff_config_parameters[gff_name]['parent_attribute']
+				elif 'all' in gff_config_parameters:
+					child_attribute = gff_config_parameters['all']['child_attribute']
+					child_parent_linker = gff_config_parameters['all']['child_parent_linker']
+					parent_attribute = gff_config_parameters['all']['parent_attribute']
 				else:
 					child_attribute = gff_config_parameters['default']['child_attribute']
 					child_parent_linker = gff_config_parameters['default']['child_parent_linker']
+					parent_attribute = gff_config_parameters['default']['parent_attribute']
 				seqs = load_sequences(str(assembly))
-				transcript_information, message = load_transcript_information_from_gff3(str(gff), process_pseudos,child_attribute,child_parent_linker)
+				transcript_information, message = load_transcript_information_from_gff3(str(gff), process_pseudos,child_attribute,child_parent_linker, parent_attribute)
+				#warning in case GFF contig names do not match with the FASTA header contig names
+				gff_ids = {seg['chr'] for transcript in transcript_information for seg in transcript}
+				if gff_ids - set(seqs):
+					print(f"WARNING: {gff_name}: {len(gff_ids - set(seqs))} of {len(gff_ids)} GFF seqids not in FASTA, e.g. {sorted(gff_ids - set(seqs))[:5]}")
 				construct_CDS_file(transcript_information, cds_out, seqs, child_parent_linker)
 
 if '--assembly' in sys.argv and '--gff' in sys.argv and '--out' in sys.argv:
