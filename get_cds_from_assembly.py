@@ -96,7 +96,7 @@ def load_sequences( multiple_fasta_file ):
 		return sequences
 
 #function for loading transcript information from GFF3 file
-def load_transcript_information_from_gff3( gff3_input_file,process_pseudos,child_attribute,child_parent_linker, parent_attribute):
+def load_transcript_information_from_gff3( gff3_input_file,process_pseudos,child_attribute,child_parent_linker, parent_attribute, transsplice):
 	"""! @brief load all transcript information from gff3 file """
 	# --- load all data from file --- #
 	message = []
@@ -334,10 +334,19 @@ def load_transcript_information_from_gff3( gff3_input_file,process_pseudos,child
 				orientations = set(s['orientation'] for s in segments)
 				has_part = any(s.get('part') is not None for s in segments)
 
+				if orientations - {'+','-'}:#skipping transcripts that do not have + or - orientation
+					print(f"WARNING: transcript '{key}' has unstranded (.) features; skipped.")  # NEW
+					continue
+
 				if len(orientations) > 1 or has_part:
 					print(f"WARNING: transcript '{key}' shows signs of trans-splicing "
 								   f"(mixed strands: {len(orientations) > 1}, part= present: {has_part}) — "
-								   f"extracting using standard coordinate-based ordering.")
+								   f"--transsplice mode: {transsplice}.")
+					if transsplice == 'skip':
+						continue
+					elif transsplice == 'process' and all(s['part'] is not None for s in segments):
+						final_data.append(sorted(segments, key=lambda s: (s['part'], s['start'] if s['orientation'] == '+' else -s['start'])))
+						continue
 				if segments[0]['orientation'] == '+':
 					final_data.append(sorted(segments, key=itemgetter('start')))
 				else:
@@ -611,10 +620,19 @@ def load_transcript_information_from_gff3( gff3_input_file,process_pseudos,child
 				orientations = set(s['orientation'] for s in segments)
 				has_part = any(s.get('part') is not None for s in segments)
 
+				if orientations - {'+','-'}:#skipping transcripts that do not have + or - orientation
+					print(f"WARNING: transcript '{key}' has unstranded (.) features; skipped.")  # NEW
+					continue
+
 				if len(orientations) > 1 or has_part:
 					print(f"WARNING: transcript '{key}' shows signs of trans-splicing "
 								   f"(mixed strands: {len(orientations) > 1}, part= present: {has_part}) — "
-								   f"extracting using standard coordinate-based ordering.")
+								   f"--transsplice mode: {transsplice}.")
+					if transsplice == 'skip':
+						continue
+					elif transsplice == 'process' and all(s['part'] is not None for s in segments):
+						final_data.append(sorted(segments, key=lambda s: (s['part'], s['start'] if s['orientation'] == '+' else -s['start'])))
+						continue
 
 				if segments[0]['orientation'] == '+':
 					final_data.append(sorted(segments, key=itemgetter('start')))
@@ -635,7 +653,7 @@ def load_transcript_information_from_gff3( gff3_input_file,process_pseudos,child
 		return final_data, message
 
 #function of constructing the CDS FASTA file
-def construct_CDS_file( transcript_info, CDS_file, assembly, child_parent_linker):
+def construct_CDS_file( transcript_info, CDS_file, assembly, child_parent_linker, transsplice):
 	"""! @brief construct file with all sequences for translation """
 	with open(CDS_file, "w") as out:
 		for transcript in transcript_info:
@@ -644,6 +662,8 @@ def construct_CDS_file( transcript_info, CDS_file, assembly, child_parent_linker
 			if transcript[0]['orientation'] == '-':
 				revcomp_status = True
 			for part in transcript:
+				if transsplice == 'process':#to handle transspliced segments
+					revcomp_status = part['orientation'] == '-'
 				if revcomp_status:
 					seq.append(revcomp(assembly[part['chr']][part['start'] - 1:part['end']]))
 				else:
@@ -688,6 +708,12 @@ def main (arguments):
 		process_pseudos = arguments[arguments.index('--process_pseudos') + 1]
 	else:
 		process_pseudos = 'yes'
+	if '--transsplice' in arguments:#warn throws a warning and processes the segments with standard orientation rules (might be wrong), skip skips the transspliced segments entirely, process helps process the transspliced segments according to the parts numbering in case they are present
+		transsplice = arguments[arguments.index('--transsplice') + 1].lower()
+		if transsplice not in ('warn', 'skip', 'process'):
+			sys.exit("--transsplice must be 'warn', 'skip' or 'process'")
+	else:
+		transsplice = 'warn'
 	gff_config_parameters = {}
 	if '--gff_config' in arguments:
 		gff_config_file = arguments[arguments.index('--gff_config')+1]
@@ -739,7 +765,7 @@ def main (arguments):
 					child_parent_linker = gff_config_parameters['default']['child_parent_linker']
 					parent_attribute = gff_config_parameters['default']['parent_attribute']
 				seqs = load_sequences(str(assembly))
-				transcript_information, message = load_transcript_information_from_gff3(str(gff), process_pseudos,child_attribute,child_parent_linker, parent_attribute)
+				transcript_information, message = load_transcript_information_from_gff3(str(gff), process_pseudos,child_attribute,child_parent_linker, parent_attribute, transsplice)
 				if not transcript_information:#check to skip the rest of the code block in case an empty transcript_information is returned from the load_transcript_information function
 					print(f"WARNING: {gff_name}: no transcripts extracted, no output written")
 					continue
@@ -747,7 +773,7 @@ def main (arguments):
 				gff_ids = {seg['chr'] for transcript in transcript_information for seg in transcript}
 				if gff_ids - set(seqs):
 					print(f"WARNING: {gff_name}: {len(gff_ids - set(seqs))} of {len(gff_ids)} GFF seqids not in FASTA, e.g. {sorted(gff_ids - set(seqs))[:5]}")
-				construct_CDS_file(transcript_information, cds_out, seqs, child_parent_linker)
+				construct_CDS_file(transcript_information, cds_out, seqs, child_parent_linker, transsplice)
 
 if '--assembly' in sys.argv and '--gff' in sys.argv and '--out' in sys.argv:
 	main(sys.argv)
