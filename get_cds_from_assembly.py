@@ -116,6 +116,10 @@ def load_transcript_information_from_gff3( gff3_input_file,process_pseudos,child
 			# checking if cds feature is present in the GFF file
 			has_cds = any(line.split('\t')[2].upper() == 'CDS' for line in gff_lines
 						  if not line.startswith('#') and len(line.split('\t')) >= 3)
+		if not has_cds:#early return to avoid writing output for cases where GFF files miss CDS features
+			print(f"WARNING: {gff3_input_file}: no CDS features found; skipping "
+				  f"(exon-based output would include UTRs, not CDS).")
+			return [], message
 		if process_pseudos == 'no':
 			if has_mrna:  # checking for pseudogenes when mrna feature is present
 				gff_pseudos_genes = set()
@@ -183,8 +187,7 @@ def load_transcript_information_from_gff3( gff3_input_file,process_pseudos,child
 									if mrna_id:
 										gff_pseudos.add(mrna_id)
 								else:
-									if 'PSEUDO=TRUE' in parts[8].upper() or 'GENE_BIOTYPE=PSEUDOGENE' in parts[
-										8].upper():
+									if 'PSEUDO=TRUE' in parts[8].upper() or 'GENE_BIOTYPE=PSEUDOGENE' in parts[8].upper():
 										if mrna_id:
 											gff_pseudos.add(mrna_id)
 			else:  # checking for pseudogenes when no mrna, transcript feature is present and only cds feature is present
@@ -369,6 +372,10 @@ def load_transcript_information_from_gff3( gff3_input_file,process_pseudos,child
 			# checking if cds feature is present in the GFF file
 			has_cds = any(line.split('\t')[2].upper() == 'CDS' for line in gff_lines
 				  if not line.startswith('#') and len(line.split('\t')) >= 3)
+		if not has_cds:#early return to avoid writing output for cases where GFF files miss CDS features
+			print(f"WARNING: {gff3_input_file}: no CDS features found; skipping "
+				  f"(exon-based output would include UTRs, not CDS).")
+			return [], message
 
 		"""
 		with gzip.open(gff3_input_file, "rt") as f:
@@ -733,6 +740,9 @@ def main (arguments):
 					parent_attribute = gff_config_parameters['default']['parent_attribute']
 				seqs = load_sequences(str(assembly))
 				transcript_information, message = load_transcript_information_from_gff3(str(gff), process_pseudos,child_attribute,child_parent_linker, parent_attribute)
+				if not transcript_information:#check to skip the rest of the code block in case an empty transcript_information is returned from the load_transcript_information function
+					print(f"WARNING: {gff_name}: no transcripts extracted, no output written")
+					continue
 				#warning in case GFF contig names do not match with the FASTA header contig names
 				gff_ids = {seg['chr'] for transcript in transcript_information for seg in transcript}
 				if gff_ids - set(seqs):
