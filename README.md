@@ -125,7 +125,7 @@ python3 Isoform_cleaner.py
 					(iii) parent_attribute: attribute field of the gene feature like ID			        
 ```
 
-### Kindly cite this repository if you use any scripts from here. Thank you!
+##### Kindly cite this repository if you use any scripts from here. Thank you!
 
-# Third party tool references:
+### Third party tool references:
 1. Wei Shen*, Botond Sipos, and Liuyang Zhao. 2024. SeqKit2: A Swiss Army Knife for Sequence and Alignment Processing. iMeta e191. doi:10.1002/imt2.191. 
