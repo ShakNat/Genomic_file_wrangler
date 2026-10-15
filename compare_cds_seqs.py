@@ -11,12 +11,16 @@ __usage__= """
 			--test <full path to folder of CDS files to be tested>
 			--out <full path to output directory>
 
+			optional:
+			--seqkit <full path to the seqkit executable> (default: seqkit, i.e. found via PATH)
+
 			NOTE_1: CDS files should have extension of .cds.fa, .cds.fna or .cds.fasta (optionally followed by .gz)
 			NOTE_2: A reference file and a test file are paired when their names are identical after removing
 					the extension (case ignored), e.g. species1.cds.fasta and Species1.cds.fa.gz
 			NOTE_3: The comparison is done with respect to the reference. Sequences are compared by the hash
 					calculated by seqkit (seqkit fx2tab -s), sequence IDs are not used for the matching
-			NOTE_4: seqkit has to be installed: conda install -c bioconda seqkit
+			NOTE_4: seqkit has to be installed (conda install -c bioconda seqkit). If it is not available in PATH,
+					give the location of the executable with --seqkit
 
 			Output files in the output directory:
 					<name>_differences.tsv - sequences only found in the reference or only found in the test file
@@ -57,9 +61,9 @@ def find_cds_files( folder ):
 	return files
 
 #function to get the sequence IDs and hashes with seqkit
-def get_records( fasta_file ):
+def get_records( fasta_file,seqkit ):
 	"""! @brief runs seqkit and returns a list of (sequence ID, sequence hash) for every sequence in the file """
-	result = subprocess.run(['seqkit', 'fx2tab', '-s', fasta_file], capture_output=True, text=True)
+	result = subprocess.run([seqkit, 'fx2tab', '-s', fasta_file], capture_output=True, text=True)
 	if result.returncode != 0:
 		print(f"WARNING: seqkit failed on {fasta_file}: {result.stderr.strip()}")
 		return None
@@ -99,8 +103,10 @@ def main (arguments):
 	outdir = arguments[arguments.index('--out') + 1]#full path to output directory
 	if outdir[-1] != "/":
 		outdir += "/"
-	if shutil.which('seqkit') is None:
-		sys.exit("seqkit not found. Install it with: conda install -c bioconda seqkit")
+	if '--seqkit' in arguments:
+		seqkit = arguments[arguments.index('--seqkit') + 1]
+	else:
+		seqkit = 'seqkit'
 	if not os.path.isdir(reference_arg):
 		sys.exit(f"{reference_arg} is not a folder")
 	if not os.path.isdir(test_arg):
@@ -123,8 +129,8 @@ def main (arguments):
 		if base not in test_files:
 			print(f"WARNING: no test file found for reference '{base}'")
 			continue
-		reference_records = get_records(reference_file)
-		test_records = get_records(test_files[base])
+		reference_records = get_records(reference_file,seqkit)
+		test_records = get_records(test_files[base],seqkit)
 		if reference_records is None or test_records is None:
 			continue
 
