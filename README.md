@@ -22,7 +22,8 @@ python3 get_cds_from_assembly.py
 			because exon-based sequences would include UTRs
     NOTE_5: GFF seqids (column 1) must match the FASTA headers (first word only).
 			Transcripts on contigs that are missing in the FASTA are skipped;
-			if no seqid matches at all, the species is skipped with an error message
+			if no seqid matches at all, the species is skipped with
+            an error message
 
     optional:
         --gff_config <full path to txt file containing the gff parameters to be used
@@ -58,9 +59,10 @@ python3 get_cds_from_assembly.py
         on all segments are skipped
 
         --contig_boundary_violation_process <yes|no>
-        Controls CDS segments whose GFF coordinates run past the end of the contig. 
-		For instance, genes that cross the origin of circular genomes (mitochondria,
+        Controls CDS segments whose GFF coordinates run past the end of the contig.
+        For instance, genes that cross the origin of circular genomes (mitochondria,
         plastids) this way, e.g. a CDS segment at 394625-395019 on a 367808 bp contig
+
         yes: such segments wrap around to the start of the contig (circular contig assumed)
         and a warning is printed for each
         no (default): coordinates are used as given, so such segments come out empty
@@ -112,7 +114,8 @@ Usage instructions of **compare_cds_seq.py**:
 			only in the test file (test_only);
             columns: status, id, sequence_hash (only written if there are differences)
             comparison_summary.tsv - one row per name; 
-			columns: name, reference_total, test_total, identical, reference_only, test_only
+			columns: name, reference_total, test_total, identical, 
+			reference_only, test_only
 
 
 **(3) transcript_to_gene_map.py** - Python script to obtain list of genes corresponding to list of transcripts by mapping with the GFF file
