@@ -141,18 +141,18 @@ python3 Isoform_cleaner.py
 					--sample_name <Name of the sample you are analyzing>
 					--out <Full path to output directory>
 
-					Optional:
-                    --gff_config <Full path to GFF config TXT file>
-					Needs 3 columns in the order
+Optional:
+--gff_config <Full path to GFF config TXT file>
+Needs 3 columns in the order
 
-					(i) child_attribute: attribute field of the mRNA or transcript feature in the file like ID
+(i) child_attribute: attribute field of the mRNA or transcript feature in the file like ID
 
-					(ii) child_parent_linker: attribute field of the mRNA or transcript, CDS, exon features that link them with their 
-					respective parent feature like Parent - Note: base assumption by the tool is that all child levels
-					have the same child-parent linker attribute fields. For eg., if Parent is the child-parent linker in the mRNA
-                    feature line,then Parent will be the child-parent linker for all other child-level feature lines in the GFF
+(ii) child_parent_linker: attribute field of the mRNA or transcript, CDS, exon features that link them with their 
+respective parent feature like Parent - Note: base assumption by the tool is that all child levels
+have the same child-parent linker attribute fields. For eg., if Parent is the child-parent linker in the mRNA
+feature line,then Parent will be the child-parent linker for all other child-level feature lines in the GFF
 
-					(iii) parent_attribute: attribute field of the gene feature like ID			        
+(iii) parent_attribute: attribute field of the gene feature like ID			        
 ```
 
 ##### Kindly cite this repository if you use any scripts from here. Thank you!
