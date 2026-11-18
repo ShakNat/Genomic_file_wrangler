@@ -8,6 +8,7 @@ __usage__ = """
 					--gff <FULL_PATH_TO_GFF_FILE_INCLUDING_FILE_NAME>
 					--transcripts <FULL_PATH_TO_TXT_FILE_WITH_TRANSCRIPT_NAMES_ONE_PER_LINE_INCLUDING_FILE_NAME>
 					--genes <FULL_PATH_TO_OUTPUT_FILE_INCLUDING_FILE_NAME>
+					--transcript_gene_map <FULL_PATH_TO_OUTPUT_TRANSCRIPT_GENE_MAP_FILE>
 					"""
 
 
@@ -157,7 +158,7 @@ def main( arguments ):
 		for transcript in transcript_gene_map:
 			out.write(f'{transcript}\t{transcript_gene_map[transcript]}\n')
 
-if '--gff' in sys.argv and '--transcripts' in sys.argv and '--genes' in sys.argv:
+if '--gff' in sys.argv and '--transcripts' in sys.argv and '--genes' in sys.argv and '--transcript_gene_map' in sys.argv:
 	main(sys.argv)
 else:
 	sys.exit( __usage__ )
