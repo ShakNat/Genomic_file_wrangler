@@ -136,6 +136,7 @@ def main( arguments ):
 
 	#output file
 	output_file = arguments[ arguments.index('--genes')+1 ]
+	map_output_file = arguments[ arguments.index('--transcript_gene_map')+1 ]
 	#file with transcript names one per line
 	transcript_file = arguments[ arguments.index('--transcripts')+1 ]
 	transcript_list = []
@@ -152,6 +153,9 @@ def main( arguments ):
 	with open(output_file, 'w') as out:
 		for transcript in transcript_gene_map:
 			out.write(f'{transcript_gene_map[transcript]}\n')
+	with open(map_output_file, 'w') as out:
+		for transcript in transcript_gene_map:
+			out.write(f'{transcript}\t{transcript_gene_map[transcript]}\n')
 
 if '--gff' in sys.argv and '--transcripts' in sys.argv and '--genes' in sys.argv:
 	main(sys.argv)
