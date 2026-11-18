@@ -7,8 +7,9 @@ __usage__ = """
 					python3 transcript_to_gene_map.py
 					--gff <FULL_PATH_TO_GFF_FILE_INCLUDING_FILE_NAME>
 					--transcripts <FULL_PATH_TO_TXT_FILE_WITH_TRANSCRIPT_NAMES_ONE_PER_LINE_INCLUDING_FILE_NAME>
-					--genes <FULL_PATH_TO_OUTPUT_FILE_INCLUDING_FILE_NAME>
 					--transcript_gene_map <FULL_PATH_TO_OUTPUT_TRANSCRIPT_GENE_MAP_FILE>
+					OPTIONAL:
+					--genes <FULL_PATH_TO_OUTPUT_FILE_INCLUDING_FILE_NAME>
 					"""
 
 
@@ -136,7 +137,10 @@ def main( arguments ):
 		parent_attribute = 'ID'
 
 	#output file
-	output_file = arguments[ arguments.index('--genes')+1 ]
+	if '--genes' in arguments:
+		output_file = arguments[ arguments.index('--genes')+1 ]
+	else:
+		output_file = None
 	map_output_file = arguments[ arguments.index('--transcript_gene_map')+1 ]
 	#file with transcript names one per line
 	transcript_file = arguments[ arguments.index('--transcripts')+1 ]
@@ -151,14 +155,15 @@ def main( arguments ):
 		for transcript in transcript_list:
 			if transcript in transcripts_per_gene[gene]:
 				transcript_gene_map[transcript] = gene
-	with open(output_file, 'w') as out:
-		for transcript in transcript_gene_map:
-			out.write(f'{transcript_gene_map[transcript]}\n')
+	if output_file is not None:
+		with open(output_file, 'w') as out:
+			for transcript in transcript_gene_map:
+				out.write(f'{transcript_gene_map[transcript]}\n')
 	with open(map_output_file, 'w') as out:
 		for transcript in transcript_gene_map:
 			out.write(f'{transcript}\t{transcript_gene_map[transcript]}\n')
 
-if '--gff' in sys.argv and '--transcripts' in sys.argv and '--genes' in sys.argv and '--transcript_gene_map' in sys.argv:
+if '--gff' in sys.argv and '--transcripts' in sys.argv and '--transcript_gene_map' in sys.argv:
 	main(sys.argv)
 else:
 	sys.exit( __usage__ )
